@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Login - LegalAI{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary-light to-blue-900 p-4">
+    <!-- Background decorations -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 left-20 w-64 h-64 bg-gold/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-20 right-20 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"></div>
+    </div>
+    
+    <div class="w-full max-w-md relative z-10">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <a href="/" class="inline-flex items-center gap-3">
+                <div class="w-14 h-14 bg-white/10 backdrop-blur rounded-2xl flex items-center justify-center border border-white/20">
+                    <i class="fas fa-gavel text-white text-2xl"></i>
+                </div>
+                <span class="text-3xl font-bold text-white font-serif">LegalAI</span>
+            </a>
+            <p class="text-blue-200 mt-2">Welcome back. Sign in to continue.</p>
+        </div>
+        
+        <!-- Login card -->
+        <div class="glass rounded-3xl p-8 shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Sign In</h2>
+            
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user text-primary mr-1"></i> Username or Email
+                    </label>
+                    <input type="text" id="username" placeholder="Enter username or email"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-gray-50"
+                        required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-lock text-primary mr-1"></i> Password
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="password" placeholder="Enter your password"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition bg-gray-50 pr-12"
+                            required>
+                        <button type="button" onclick="togglePassword('password')" 
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye" id="password-toggle-icon"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Error message -->
+                <div id="error-msg" class="hidden bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 text-sm flex items-center gap-2">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="error-text"></span>
+                </div>
+                
+                <button type="submit" id="login-btn"
+                    class="w-full btn-primary text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Sign In</span>
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-gray-600">Don't have an account? 
+                    <a href="/register" class="text-primary font-semibold hover:underline">Create one free</a>
+                </p>
+            </div>
+            
+            <!-- Demo credentials -->
+            <div class="mt-6 bg-blue-50 rounded-xl p-4 border border-blue-100">
+                <p class="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1">
+                    <i class="fas fa-info-circle"></i> Demo Credentials
+                </p>
+                <div class="flex gap-3">
+                    <button onclick="fillDemo('admin', 'Admin@123456')" 
+                        class="flex-1 bg-primary text-white text-xs py-2 rounded-lg font-medium hover:bg-primary-light transition">
+                        Admin Login
+                    </button>
+                    <button onclick="window.location='/register'" 
+                        class="flex-1 bg-gray-200 text-gray-700 text-xs py-2 rounded-lg font-medium hover:bg-gray-300 transition">
+                        Create Account
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <p class="text-center text-blue-200/70 text-sm mt-6">
+            <a href="/" class="hover:text-white transition"><i class="fas fa-arrow-left mr-1"></i>Back to Home</a>
+        </p>
+    </div>
+</div>
+
+<script>
+function togglePassword(id) {
+    const input = document.getElementById(id);
+    const icon = document.getElementById(`${id}-toggle-icon`);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+
+function fillDemo(user, pass) {
+    document.getElementById('username').value = user;
+    document.getElementById('password').value = pass;
+}
+
+// Redirect if already logged in
+if (AUTH.isLoggedIn()) window.location.href = '/chat';
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    const errorDiv = document.getElementById('error-msg');
+    const errorText = document.getElementById('error-text');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner w-5 h-5 border-2 border-white/30 border-t-white"></div> Signing in...';
+    errorDiv.classList.add('hidden');
+    
+    const formData = new URLSearchParams();
+    formData.append('username', document.getElementById('username').value);
+    formData.append('password', document.getElementById('password').value);
+    formData.append('grant_type', 'password');
+    
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            AUTH.setAuth(data);
+            showToast('Login successful! Welcome back 👋', 'success');
+            setTimeout(() => {
+                const redirect = new URLSearchParams(window.location.search).get('next') || '/chat';
+                window.location.href = redirect;
+            }, 1000);
+        } else {
+            errorText.textContent = data.detail || 'Login failed. Check credentials.';
+            errorDiv.classList.remove('hidden');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>Sign In</span>';
+        }
+    } catch (err) {
+        errorText.textContent = 'Connection error. Please try again.';
+        errorDiv.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>Sign In</span>';
+    }
+});
+</script>
+{% endblock %}

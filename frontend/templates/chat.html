@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+{% block title %}Legal Chat - LegalAI{% endblock %}
+
+{% block body %}
+<div class="flex h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <aside class="sidebar flex-shrink-0 flex flex-col" id="sidebar">
+        <div class="p-5 flex items-center gap-3 border-b border-white/10">
+            <div class="w-9 h-9 bg-gold/20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-gavel text-gold text-sm" style="color:#c09620"></i>
+            </div>
+            <a href="/" class="text-white font-bold text-xl font-serif">LegalAI</a>
+            <button class="ml-auto text-white/60 hover:text-white md:hidden" onclick="toggleSidebar()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- New Chat -->
+        <div class="p-3">
+            <button onclick="newChat()" class="w-full flex items-center gap-2 px-4 py-3 rounded-xl border border-white/20 text-white hover:bg-white/10 transition text-sm font-medium">
+                <i class="fas fa-plus"></i> New Chat
+            </button>
+        </div>
+        
+        <!-- Chat History (for logged in users) -->
+        <div class="flex-1 overflow-y-auto p-2" id="chat-history-list">
+            <p class="text-white/40 text-xs px-3 py-2 uppercase tracking-wider">Recent Chats</p>
+            <div id="history-items">
+                <div class="text-white/30 text-xs px-3 py-2" id="history-placeholder">
+                    Login to save chat history
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nav links -->
+        <div class="p-3 border-t border-white/10 space-y-1">
+            <a href="/documents" class="sidebar-item flex items-center gap-3 px-4 py-2.5 text-white/70 hover:text-white text-sm">
+                <i class="fas fa-file-alt w-4"></i> Documents
+            </a>
+            <a href="/history" class="sidebar-item flex items-center gap-3 px-4 py-2.5 text-white/70 hover:text-white text-sm" id="history-link" style="display:none">
+                <i class="fas fa-history w-4"></i> History
+            </a>
+            <a href="/admin" class="sidebar-item flex items-center gap-3 px-4 py-2.5 text-white/70 hover:text-white text-sm admin-link" style="display:none">
+                <i class="fas fa-cog w-4"></i> Admin Panel
+            </a>
+        </div>
+        
+        <!-- User info -->
+        <div class="p-4 border-t border-white/10">
+            <div id="sidebar-user" class="hidden">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-gold/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-gold text-sm" style="color:#c09620"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white text-sm font-medium truncate" id="sidebar-username"></p>
+                        <p class="text-white/40 text-xs" id="sidebar-role"></p>
+                    </div>
+                    <button onclick="AUTH.logout()" title="Logout" class="text-white/40 hover:text-red-400 transition">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="sidebar-guest">
+                <a href="/login" class="flex items-center gap-2 text-white/60 hover:text-white text-sm transition">
+                    <i class="fas fa-sign-in-alt"></i> Login / Register
+                </a>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Main Chat Area -->
+    <main class="flex-1 flex flex-col main-content overflow-hidden">
+        <!-- Top bar -->
+        <header class="bg-white border-b px-4 py-3 flex items-center gap-3 flex-shrink-0">
+            <button onclick="toggleSidebar()" class="text-gray-500 hover:text-gray-700 md:hidden">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="flex-1">
+                <h1 class="font-bold text-gray-800 text-lg">Legal AI Assistant</h1>
+                <p class="text-xs text-gray-400">Ask any legal question, upload documents, images</p>
+            </div>
+            <!-- Upload button -->
+            <label for="image-upload" class="cursor-pointer flex items-center gap-2 bg-purple-50 hover:bg-purple-100 text-purple-600 px-3 py-2 rounded-xl text-sm font-medium transition" title="Upload image for analysis (Login required)">
+                <i class="fas fa-camera"></i>
+                <span class="hidden sm:inline">Upload Image</span>
+            </label>
+            <input type="file" id="image-upload" accept="image/*" class="hidden" onchange="handleImageUpload(this)">
+        </header>
+        
+        <!-- Messages area -->
+        <div class="flex-1 overflow-y-auto p-4" id="messages-container">
+            <!-- Welcome message -->
+            <div id="welcome-screen" class="flex flex-col items-center justify-center h-full py-10">
+                <div class="w-20 h-20 gradient-legal rounded-3xl flex items-center justify-center mb-5 shadow-lg">
+                    <i class="fas fa-gavel text-white text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 font-serif mb-2">Legal AI Assistant</h2>
+                <p class="text-gray-500 text-center max-w-md mb-8">Ask me anything about law — cases, statutes, rights, procedures, or upload a legal document image for analysis.</p>
+                
+                <!-- Suggested questions -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
+                    <button onclick="sendSuggestion(this)" data-q="What are fundamental rights under the Constitution?"
+                        class="suggestion-btn bg-white border border-gray-200 rounded-xl p-4 text-left hover:border-primary hover:bg-blue-50 transition">
+                        <i class="fas fa-balance-scale text-primary mb-2"></i>
+                        <p class="text-sm font-medium text-gray-700">What are fundamental rights under the Constitution?</p>
+                    </button>
+                    <button onclick="sendSuggestion(this)" data-q="Explain the concept of Habeas Corpus with relevant cases"
+                        class="suggestion-btn bg-white border border-gray-200 rounded-xl p-4 text-left hover:border-primary hover:bg-blue-50 transition">
+                        <i class="fas fa-gavel text-primary mb-2"></i>
+                        <p class="text-sm font-medium text-gray-700">Explain Habeas Corpus with relevant cases</p>
+                    </button>
+                    <button onclick="sendSuggestion(this)" data-q="What are the essential elements of a valid contract?"
+                        class="suggestion-btn bg-white border border-gray-200 rounded-xl p-4 text-left hover:border-primary hover:bg-blue-50 transition">
+                        <i class="fas fa-file-contract text-primary mb-2"></i>
+                        <p class="text-sm font-medium text-gray-700">Essential elements of a valid contract?</p>
+                    </button>
+                    <button onclick="sendSuggestion(this)" data-q="Explain the difference between cognizable and non-cognizable offences"
+                        class="suggestion-btn bg-white border border-gray-200 rounded-xl p-4 text-left hover:border-primary hover:bg-blue-50 transition">
+                        <i class="fas fa-shield-alt text-primary mb-2"></i>
+                        <p class="text-sm font-medium text-gray-700">Cognizable vs Non-cognizable offences</p>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="messages-list" class="space-y-4 hidden max-w-4xl mx-auto"></div>
+        </div>
+        
+        <!-- Input area -->
+        <div class="bg-white border-t p-4 flex-shrink-0">
+            <div class="max-w-4xl mx-auto">
+                <!-- Image preview -->
+                <div id="image-preview-container" class="hidden mb-3 flex items-center gap-3 bg-purple-50 rounded-xl p-3">
+                    <img id="image-preview" class="w-16 h-16 object-cover rounded-lg">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-700">Image ready for analysis</p>
+                        <p class="text-xs text-gray-400" id="image-name"></p>
+                    </div>
+                    <button onclick="clearImage()" class="text-red-400 hover:text-red-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="flex gap-3">
+                    <div class="flex-1 relative">
+                        <textarea id="message-input" 
+                            placeholder="Ask any legal question... (Press Enter to send, Shift+Enter for new line)"
+                            class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition text-sm"
+                            rows="1" style="max-height: 120px; min-height: 48px;"
+                            onkeydown="handleKeyDown(event)"
+                            oninput="autoResize(this)"></textarea>
+                    </div>
+                    <button id="send-btn" onclick="sendMessage()"
+                        class="btn-primary text-white px-5 py-3 rounded-2xl flex items-center gap-2 font-medium text-sm flex-shrink-0 shadow-md">
+                        <i class="fas fa-paper-plane"></i>
+                        <span class="hidden sm:inline">Send</span>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-400 mt-2 text-center">
+                    <i class="fas fa-shield-alt mr-1"></i>
+                    AI-powered legal information. Not professional legal advice. 
+                    <span id="login-note" class="text-orange-500">Login to save chat history.</span>
+                    <span id="logged-note" class="text-green-600 hidden">Chat history saved automatically.</span>
+                </p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+let currentSessionId = null;
+let pendingImage = null;
+
+// Initialize
+const user = AUTH.getUser();
+if (user) {
+    document.getElementById('sidebar-user').classList.remove('hidden');
+    document.getElementById('sidebar-guest').classList.add('hidden');
+    document.getElementById('sidebar-username').textContent = user.username;
+    document.getElementById('sidebar-role').textContent = user.role === 'admin' ? '👑 Admin' : '⚖️ User';
+    document.getElementById('login-note').classList.add('hidden');
+    document.getElementById('logged-note').classList.remove('hidden');
+    document.getElementById('history-link').style.display = 'flex';
+    document.getElementById('history-placeholder').textContent = 'Loading history...';
+    if (user.role === 'admin') document.querySelectorAll('.admin-link').forEach(el => el.style.display = 'flex');
+    loadChatHistory();
+}
+
+async function loadChatHistory() {
+    try {
+        const data = await API.get('/api/chat/history');
+        if (data && data.sessions) {
+            const list = document.getElementById('history-items');
+            if (data.sessions.length === 0) {
+                list.innerHTML = '<p class="text-white/30 text-xs px-3 py-2">No previous chats</p>';
+                return;
+            }
+            list.innerHTML = data.sessions.map(s => `
+                <button onclick="loadSession('${s.session_id}', '${(s.title || 'Chat').replace(/'/g, '')}')" 
+                    class="sidebar-item w-full flex items-center gap-2 px-3 py-2.5 text-white/70 hover:text-white text-xs text-left transition">
+                    <i class="fas fa-comment text-xs opacity-50"></i>
+                    <span class="truncate">${s.title || 'Legal Chat'}</span>
+                </button>
+            `).join('');
+        }
+    } catch(e) {}
+}
+
+function newChat() {
+    currentSessionId = null;
+    pendingImage = null;
+    document.getElementById('messages-list').innerHTML = '';
+    document.getElementById('messages-list').classList.add('hidden');
+    document.getElementById('welcome-screen').classList.remove('hidden');
+    clearImage();
+}
+
+async function loadSession(sessionId, title) {
+    currentSessionId = sessionId;
+    try {
+        const data = await API.get(`/api/chat/session/${sessionId}/messages`);
+        if (data && data.messages) {
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('messages-list').classList.remove('hidden');
+            const list = document.getElementById('messages-list');
+            list.innerHTML = '';
+            data.messages.forEach(msg => addMessage(msg.role, msg.content));
+        }
+    } catch(e) { showToast('Could not load session', 'error'); }
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+}
+
+function addMessage(role, content, isLoading = false) {
+    document.getElementById('welcome-screen').classList.add('hidden');
+    document.getElementById('messages-list').classList.remove('hidden');
+    
+    const div = document.createElement('div');
+    div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+    
+    if (isLoading) {
+        div.id = 'loading-msg';
+        div.innerHTML = `
+            <div class="chat-ai px-5 py-4 max-w-xs sm:max-w-md md:max-w-2xl">
+                <div class="flex items-center gap-1">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            </div>`;
+    } else {
+        const bubbleClass = role === 'user' ? 'chat-user' : 'chat-ai';
+        const icon = role === 'user' ? `<div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 ml-2"><i class="fas fa-user text-white text-xs"></i></div>` : `<div class="w-8 h-8 gradient-legal rounded-full flex items-center justify-center flex-shrink-0 mr-2"><i class="fas fa-gavel text-white text-xs"></i></div>`;
+        
+        const processedContent = role === 'assistant' ? 
+            `<div class="prose text-sm">${renderMarkdown(content)}</div>` : 
+            `<p class="text-sm">${content}</p>`;
+        
+        div.innerHTML = `
+            ${role === 'assistant' ? icon : ''}
+            <div class="${bubbleClass} px-5 py-4 max-w-xs sm:max-w-md md:max-w-2xl shadow-sm">
+                ${processedContent}
+                ${role === 'assistant' ? `
+                    <div class="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
+                        <button onclick="copyText(this)" class="text-gray-400 hover:text-primary text-xs flex items-center gap-1 transition"><i class="fas fa-copy"></i> Copy</button>
+                    </div>` : ''}
+            </div>
+            ${role === 'user' ? icon : ''}`;
+    }
+    
+    document.getElementById('messages-list').appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    return div;
+}
+
+function copyText(btn) {
+    const text = btn.closest('.chat-ai').querySelector('.prose')?.innerText || '';
+    navigator.clipboard.writeText(text);
+    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i> Copy', 2000);
+}
+
+async function sendMessage() {
+    const input = document.getElementById('message-input');
+    const message = input.value.trim();
+    if (!message && !pendingImage) return;
+    
+    const btn = document.getElementById('send-btn');
+    btn.disabled = true;
+    
+    // If there's an image, send image analysis
+    if (pendingImage) {
+        if (!AUTH.isLoggedIn()) {
+            showToast('Please login to upload images', 'warning');
+            btn.disabled = false;
+            return;
+        }
+        addMessage('user', message || 'Analyze this image');
+        const loadingDiv = addMessage('assistant', '', true);
+        clearImage();
+        input.value = '';
+        
+        const formData = new FormData();
+        formData.append('question', message || 'What legal information can you extract from this image?');
+        formData.append('file', pendingImage);
+        if (currentSessionId) formData.append('session_id', currentSessionId);
+        
+        try {
+            const result = await API.postForm('/api/chat/image', formData);
+            loadingDiv.remove();
+            if (result.ok) {
+                addMessage('assistant', result.data.message);
+                if (!currentSessionId) currentSessionId = result.data.session_id;
+            } else {
+                addMessage('assistant', 'Image analysis failed: ' + (result.data.detail || 'Unknown error'));
+            }
+        } catch(e) {
+            loadingDiv.remove();
+            addMessage('assistant', 'Failed to analyze image. Please try again.');
+        }
+        pendingImage = null;
+        btn.disabled = false;
+        autoResize(input);
+        return;
+    }
+    
+    addMessage('user', message);
+    input.value = '';
+    autoResize(input);
+    const loadingDiv = addMessage('assistant', '', true);
+    
+    try {
+        const result = await API.post('/api/chat/message', {
+            message,
+            session_id: currentSessionId,
+            context: '',
+        });
+        
+        loadingDiv.remove();
+        if (result.ok) {
+            addMessage('assistant', result.data.message);
+            if (!currentSessionId) currentSessionId = result.data.session_id;
+            if (AUTH.isLoggedIn()) loadChatHistory();
+        } else {
+            addMessage('assistant', '⚠️ Error: ' + (result.data.detail || 'Failed to get response'));
+        }
+    } catch(e) {
+        loadingDiv.remove();
+        addMessage('assistant', '⚠️ Connection error. Please try again.');
+    }
+    
+    btn.disabled = false;
+}
+
+function sendSuggestion(btn) {
+    const question = btn.dataset.q;
+    document.getElementById('message-input').value = question;
+    sendMessage();
+}
+
+function handleKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+}
+
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleImageUpload(input) {
+    if (!input.files[0]) return;
+    if (!AUTH.isLoggedIn()) {
+        showToast('Please login to upload images', 'warning');
+        input.value = '';
+        return;
+    }
+    pendingImage = input.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('image-preview').src = e.target.result;
+        document.getElementById('image-name').textContent = input.files[0].name;
+        document.getElementById('image-preview-container').classList.remove('hidden');
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function clearImage() {
+    pendingImage = null;
+    document.getElementById('image-upload').value = '';
+    document.getElementById('image-preview-container').classList.add('hidden');
+}
+</script>
+{% endblock %}

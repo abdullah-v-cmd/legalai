@@ -1,0 +1,61 @@
+version: '3.9'
+
+services:
+  legalai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: legalai-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=LegalAI
+      - DEBUG=false
+      - SECRET_KEY=${SECRET_KEY:-legalai-super-secret-key-change-in-production-32chars}
+      - DATABASE_URL=sqlite+aiosqlite:///./legalai.db
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@legalai.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Admin@123456}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - HUGGINGFACE_API_TOKEN=${HUGGINGFACE_API_TOKEN:-}
+      - RATE_LIMIT_PER_MINUTE=30
+    volumes:
+      - ./legalai.db:/app/legalai.db
+      - ./uploads:/app/uploads
+      - ./exports:/app/exports
+      - ./backups:/app/backups
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - legalai-net
+
+  # Nginx reverse proxy (production)
+  nginx:
+    image: nginx:alpine
+    container_name: legalai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - legalai
+    networks:
+      - legalai-net
+    profiles:
+      - production
+
+networks:
+  legalai-net:
+    driver: bridge
+
+volumes:
+  legalai-data:
+    driver: local

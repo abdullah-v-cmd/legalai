@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Chat History - LegalAI{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-50">
+    <nav class="bg-white shadow-sm sticky top-0 z-40 border-b">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="/" class="flex items-center gap-2">
+                    <div class="w-9 h-9 gradient-legal rounded-xl flex items-center justify-center">
+                        <i class="fas fa-gavel text-white"></i>
+                    </div>
+                    <span class="text-xl font-bold text-primary font-serif">LegalAI</span>
+                </a>
+                <span class="text-gray-300 hidden sm:block">|</span>
+                <span class="text-gray-600 hidden sm:block">Chat History</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/chat" class="btn-primary text-white px-4 py-2 rounded-xl text-sm font-medium">
+                    <i class="fas fa-plus mr-1"></i> New Chat
+                </a>
+                <button onclick="AUTH.logout()" class="text-red-500 text-sm hover:text-red-600">Logout</button>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <i class="fas fa-history text-primary"></i> Your Chat History
+        </h1>
+        
+        <div id="history-content">
+            <div class="flex items-center justify-center h-48">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+if (!AUTH.isLoggedIn()) {
+    showToast('Please login to view history', 'warning');
+    setTimeout(() => window.location.href = '/login', 1000);
+}
+
+async function loadHistory() {
+    const data = await API.get('/api/chat/history');
+    const container = document.getElementById('history-content');
+    
+    if (!data || !data.sessions || data.sessions.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-16">
+                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-comment-slash text-gray-300 text-2xl"></i>
+                </div>
+                <p class="text-gray-500 font-medium">No chat history yet</p>
+                <a href="/chat" class="inline-block mt-4 btn-primary text-white px-6 py-2 rounded-xl text-sm font-medium">Start a Chat</a>
+            </div>`;
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="space-y-3">
+            ${data.sessions.map(s => `
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:border-primary/30 transition cursor-pointer" onclick="window.location='/chat'">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start gap-3 flex-1 min-w-0">
+                            <div class="w-10 h-10 gradient-legal rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-comments text-white text-sm"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-semibold text-gray-800 truncate">${s.title || 'Legal Chat'}</h3>
+                                <p class="text-xs text-gray-400 mt-1">${new Date(s.created_at).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <span class="ml-3 px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 flex-shrink-0">${s.chat_type}</span>
+                    </div>
+                </div>`).join('')}
+        </div>`;
+}
+
+loadHistory();
+</script>
+{% endblock %}

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LegalAI{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { DEFAULT: '#1a1a6e', light: '#2d2d8f', dark: '#0f0f4a' },
+                        gold: { DEFAULT: '#c09620', light: '#d4aa30', dark: '#9a7810' },
+                        legal: '#1a1a6e',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #1a1a6e; border-radius: 10px; }
+        
+        /* Gradients */
+        .gradient-legal { background: linear-gradient(135deg, #1a1a6e 0%, #2d2d8f 50%, #c09620 100%); }
+        .gradient-card { background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%); }
+        
+        /* Glass effect */
+        .glass { background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; min-height: 100vh; background: linear-gradient(180deg, #1a1a6e 0%, #0f0f4a 100%); transition: all 0.3s; }
+        .sidebar-item { transition: all 0.2s; border-radius: 10px; margin: 2px 8px; }
+        .sidebar-item:hover, .sidebar-item.active { background: rgba(192, 150, 32, 0.2); border-left: 3px solid #c09620; }
+        
+        /* Chat bubbles */
+        .chat-user { background: linear-gradient(135deg, #1a1a6e, #2d2d8f); color: white; border-radius: 20px 20px 5px 20px; }
+        .chat-ai { background: white; color: #1a1a6e; border-radius: 20px 20px 20px 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        
+        /* Cards */
+        .feature-card { transition: transform 0.3s, box-shadow 0.3s; }
+        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(26,26,110,0.15); }
+        
+        /* Buttons */
+        .btn-primary { background: linear-gradient(135deg, #1a1a6e, #2d2d8f); transition: all 0.3s; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(26,26,110,0.4); }
+        .btn-gold { background: linear-gradient(135deg, #c09620, #d4aa30); transition: all 0.3s; }
+        .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(192,150,32,0.4); }
+        
+        /* Loading spinner */
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #1a1a6e; border-radius: 50%; width: 30px; height: 30px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        /* Typing indicator */
+        .typing-dot { animation: typingBounce 1.4s infinite ease-in-out; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #1a1a6e; margin: 0 2px; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-10px); } }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .sidebar { width: 0; overflow: hidden; position: fixed; z-index: 50; }
+            .sidebar.open { width: 260px; }
+            .main-content { margin-left: 0 !important; }
+        }
+        
+        /* Toast notifications */
+        .toast { position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 12px 20px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        /* Markdown rendering */
+        .prose h1 { font-size: 1.5rem; font-weight: 700; color: #1a1a6e; margin: 1rem 0 0.5rem; }
+        .prose h2 { font-size: 1.25rem; font-weight: 600; color: #1a1a6e; margin: 0.875rem 0 0.4rem; border-bottom: 2px solid #c09620; padding-bottom: 4px; }
+        .prose h3 { font-size: 1.1rem; font-weight: 600; color: #2d2d8f; margin: 0.75rem 0 0.3rem; }
+        .prose p { margin: 0.6rem 0; line-height: 1.7; }
+        .prose ul { list-style: disc; padding-left: 1.5rem; }
+        .prose ol { list-style: decimal; padding-left: 1.5rem; }
+        .prose li { margin: 0.3rem 0; }
+        .prose strong { color: #1a1a6e; font-weight: 600; }
+        .prose code { background: #f0f2ff; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: #1a1a6e; }
+        .prose blockquote { border-left: 4px solid #c09620; padding-left: 1rem; margin: 0.75rem 0; color: #555; font-style: italic; }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% block body %}{% endblock %}
+    
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+    
+    <!-- Global Scripts -->
+    <script>
+        // Auth helpers
+        const AUTH = {
+            getToken: () => localStorage.getItem('access_token'),
+            getUser: () => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } },
+            isLoggedIn: () => !!localStorage.getItem('access_token'),
+            logout: () => { localStorage.removeItem('access_token'); localStorage.removeItem('user'); window.location.href = '/'; },
+            setAuth: (data) => { localStorage.setItem('access_token', data.access_token); localStorage.setItem('user', JSON.stringify(data.user)); }
+        };
+        
+        // API helper
+        const API = {
+            headers: (extra = {}) => {
+                const h = { 'Content-Type': 'application/json', ...extra };
+                const token = AUTH.getToken();
+                if (token) h['Authorization'] = `Bearer ${token}`;
+                return h;
+            },
+            get: async (url) => {
+                const r = await fetch(url, { headers: API.headers() });
+                if (r.status === 401) { AUTH.logout(); return null; }
+                return r.json();
+            },
+            post: async (url, data) => {
+                const r = await fetch(url, { method: 'POST', headers: API.headers(), body: JSON.stringify(data) });
+                return { ok: r.ok, status: r.status, data: await r.json() };
+            },
+            postForm: async (url, formData) => {
+                const headers = {};
+                const token = AUTH.getToken();
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+                const r = await fetch(url, { method: 'POST', headers, body: formData });
+                return { ok: r.ok, status: r.status, data: await r.json() };
+            }
+        };
+        
+        // Toast notification
+        function showToast(message, type = 'info', duration = 3000) {
+            const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-600', warning: 'bg-yellow-500' };
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle', warning: 'fa-exclamation-triangle' };
+            const toast = document.createElement('div');
+            toast.className = `toast ${colors[type]} text-white flex items-center gap-3`;
+            toast.innerHTML = `<i class="fas ${icons[type]}"></i><span>${message}</span>`;
+            document.getElementById('toast-container').appendChild(toast);
+            setTimeout(() => { toast.style.animation = 'slideIn 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, duration);
+        }
+        
+        // Markdown to HTML renderer
+        function renderMarkdown(text) {
+            if (!text) return '';
+            return text
+                .replace(/```([\s\S]*?)```/g, '<code class="block bg-gray-100 p-3 rounded-lg my-2 text-sm">$1</code>')
+                .replace(/`(.*?)`/g, '<code>$1</code>')
+                .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/^#{4}\s(.+)$/gm, '<h4 class="text-base font-semibold text-gray-700 mt-3 mb-1">$1</h4>')
+                .replace(/^#{3}\s(.+)$/gm, '<h3>$1</h3>')
+                .replace(/^#{2}\s(.+)$/gm, '<h2>$2</h2>'.replace('$2','$1'))
+                .replace(/^#\s(.+)$/gm, '<h1>$1</h1>')
+                .replace(/^>\s(.+)$/gm, '<blockquote>$1</blockquote>')
+                .replace(/^[-*]\s(.+)$/gm, '<li>$1</li>')
+                .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+                .replace(/^\d+\.\s(.+)$/gm, '<li>$1</li>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>');
+        }
+        
+        // Update nav based on auth status
+        function updateNavAuth() {
+            const user = AUTH.getUser();
+            const loginLinks = document.querySelectorAll('.nav-login');
+            const userMenu = document.querySelectorAll('.nav-user');
+            const usernameEl = document.querySelectorAll('.nav-username');
+            
+            if (user) {
+                loginLinks.forEach(el => el.style.display = 'none');
+                userMenu.forEach(el => el.style.display = 'flex');
+                usernameEl.forEach(el => el.textContent = user.username);
+            } else {
+                loginLinks.forEach(el => el.style.display = 'flex');
+                userMenu.forEach(el => el.style.display = 'none');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', updateNavAuth);
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

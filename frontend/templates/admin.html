@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel - LegalAI{% endblock %}
+
+{% block body %}
+<div class="flex h-screen bg-gray-100">
+    <!-- Admin Sidebar -->
+    <aside class="sidebar flex-shrink-0 flex flex-col" id="sidebar">
+        <div class="p-5 border-b border-white/10">
+            <div class="flex items-center gap-2 mb-1">
+                <i class="fas fa-shield-alt text-gold" style="color:#c09620"></i>
+                <span class="text-white font-bold text-lg font-serif">Admin Panel</span>
+            </div>
+            <span class="text-white/40 text-xs">LegalAI Control Center</span>
+        </div>
+        <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+            <button onclick="showSection('dashboard')" class="admin-nav-btn sidebar-item w-full flex items-center gap-3 px-4 py-2.5 text-white/70 hover:text-white text-sm text-left active">
+                <i class="fas fa-tachometer-alt w-4"></i> Dashboard
+            </button>
+            <button onclick="showSection('users')" class="admin-nav-btn sidebar-item w-full flex items-center gap-3 px-4 py-2.5 text-white/70 hover:text-white text-sm text-left">
+                <i class="fas fa-users w-4"></i> Users
+            </button>
+            <button onclick="showSection('chats')" class="admin-nav-btn sidebar-item w-full flex items-center gap-3 px-4 py-2.5 text-white/70 hover:text-white text-sm text-left">
+                <i class="fas fa-comments w-4"></i> Chats
+            </button>
+            <button onclick="showSection('documents')" class="admin-nav-btn sidebar-item w-full flex items-center gap-3 px-4 py-2.5 text-white/70 hover:text-white text-sm text-left">
+                <i class="fas fa-file-alt w-4"></i> Documents
+            </button>
+            <button onclick="showSection('monitoring')" class="admin-nav-btn sidebar-item w-full flex items-center gap-3 px-4 py-2.5 text-white/70 hover:text-white text-sm text-left">
+                <i class="fas fa-chart-line w-4"></i> Monitoring
+            </button>
+            <button onclick="showSection('database')" class="admin-nav-btn sidebar-item w-full flex items-center gap-3 px-4 py-2.5 text-white/70 hover:text-white text-sm text-left">
+                <i class="fas fa-database w-4"></i> Database
+            </button>
+            <button onclick="showSection('analytics')" class="admin-nav-btn sidebar-item w-full flex items-center gap-3 px-4 py-2.5 text-white/70 hover:text-white text-sm text-left">
+                <i class="fas fa-chart-bar w-4"></i> Analytics
+            </button>
+        </nav>
+        <div class="p-4 border-t border-white/10">
+            <a href="/" class="text-white/50 text-xs flex items-center gap-1 hover:text-white transition mb-2">
+                <i class="fas fa-arrow-left"></i> Back to App
+            </a>
+            <button onclick="AUTH.logout()" class="text-red-400 text-xs flex items-center gap-1 hover:text-red-300">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto">
+        <!-- Top bar -->
+        <header class="bg-white border-b px-6 py-4 flex items-center gap-4 sticky top-0 z-30 shadow-sm">
+            <button onclick="document.getElementById('sidebar').classList.toggle('open')" class="text-gray-500 md:hidden">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="font-bold text-gray-800 text-xl" id="section-title">Dashboard</h1>
+            <div class="ml-auto flex items-center gap-3">
+                <span class="text-xs text-gray-400" id="last-updated">Loading...</span>
+                <button onclick="refreshCurrentSection()" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg text-gray-600 transition">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </header>
+        
+        <div class="p-6">
+            <!-- Dashboard Section -->
+            <div id="section-dashboard" class="admin-section">
+                <div id="dashboard-content">
+                    <div class="flex items-center justify-center h-48">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Users Section -->
+            <div id="section-users" class="admin-section hidden">
+                <div class="mb-4 flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="user-search" placeholder="Search users..." 
+                        class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                        oninput="searchUsers(this.value)">
+                </div>
+                <div id="users-content">
+                    <div class="flex items-center justify-center h-48"><div class="spinner"></div></div>
+                </div>
+            </div>
+            
+            <!-- Chats Section -->
+            <div id="section-chats" class="admin-section hidden">
+                <div id="chats-content">
+                    <div class="flex items-center justify-center h-48"><div class="spinner"></div></div>
+                </div>
+            </div>
+            
+            <!-- Documents Section -->
+            <div id="section-documents" class="admin-section hidden">
+                <div id="documents-content">
+                    <div class="flex items-center justify-center h-48"><div class="spinner"></div></div>
+                </div>
+            </div>
+            
+            <!-- Monitoring Section -->
+            <div id="section-monitoring" class="admin-section hidden">
+                <div id="monitoring-content">
+                    <div class="flex items-center justify-center h-48"><div class="spinner"></div></div>
+                </div>
+            </div>
+            
+            <!-- Database Section -->
+            <div id="section-database" class="admin-section hidden">
+                <div id="database-content">
+                    <div class="flex items-center justify-center h-48"><div class="spinner"></div></div>
+                </div>
+            </div>
+            
+            <!-- Analytics Section -->
+            <div id="section-analytics" class="admin-section hidden">
+                <div id="analytics-content">
+                    <div class="flex items-center justify-center h-48"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// Check admin access
+const user = AUTH.getUser();
+if (!user || user.role !== 'admin') {
+    showToast('Admin access required', 'error');
+    setTimeout(() => window.location.href = '/login', 1000);
+}
+
+let currentSection = 'dashboard';
+let monitoringInterval = null;
+
+function showSection(name) {
+    document.querySelectorAll('.admin-section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(`section-${name}`).classList.remove('hidden');
+    document.getElementById('section-title').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+    currentSection = name;
+    document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+    
+    if (monitoringInterval) { clearInterval(monitoringInterval); monitoringInterval = null; }
+    
+    if (name === 'dashboard') loadDashboard();
+    else if (name === 'users') loadUsers();
+    else if (name === 'chats') loadChats();
+    else if (name === 'documents') loadAdminDocs();
+    else if (name === 'monitoring') { loadMonitoring(); monitoringInterval = setInterval(loadMonitoring, 5000); }
+    else if (name === 'database') loadDatabase();
+    else if (name === 'analytics') loadAnalytics();
+}
+
+function refreshCurrentSection() { showSection(currentSection); }
+
+async function loadDashboard() {
+    const data = await API.get('/api/admin/dashboard');
+    if (!data) return;
+    document.getElementById('dashboard-content').innerHTML = `
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            ${statCard('fas fa-users', 'Total Users', data.stats.users.total, 'bg-blue-500', `+${data.stats.users.new_this_week} this week`)}
+            ${statCard('fas fa-comments', 'Chat Sessions', data.stats.chats.total_sessions, 'bg-green-500', `${data.stats.chats.total_messages} messages`)}
+            ${statCard('fas fa-file-alt', 'Documents', data.stats.documents.total, 'bg-purple-500', 'Generated')}
+            ${statCard('fas fa-user-check', 'Active Users', data.stats.users.active, 'bg-orange-500', 'Currently active')}
+        </div>
+        
+        <!-- System Info -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-server text-primary"></i> System Resources</h3>
+                ${progressBar('CPU Usage', data.system.cpu_percent, data.system.cpu_percent > 80 ? 'bg-red-500' : 'bg-blue-500')}
+                ${progressBar('Memory', data.system.memory_percent, data.system.memory_percent > 80 ? 'bg-red-500' : 'bg-green-500')}
+                ${progressBar('Disk', data.system.disk_percent, data.system.disk_percent > 80 ? 'bg-red-500' : 'bg-orange-500')}
+                <p class="text-xs text-gray-400 mt-3">Memory: ${data.system.memory_used_gb}GB / ${data.system.memory_total_gb}GB</p>
+            </div>
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-info-circle text-primary"></i> System Info</h3>
+                ${infoRow('Python', data.system.python_version.split(' ')[0])}
+                ${infoRow('Status', '<span class="text-green-500 font-medium">✓ Online</span>')}
+                ${infoRow('Disk Free', data.system.disk_free_gb + ' GB')}
+                ${infoRow('Uptime', data.system.uptime)}
+            </div>
+        </div>`;
+}
+
+async function loadUsers(search = '') {
+    const url = search ? `/api/admin/users?search=${encodeURIComponent(search)}` : '/api/admin/users';
+    const data = await API.get(url);
+    if (!data) return;
+    document.getElementById('users-content').innerHTML = `
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b flex items-center justify-between">
+                <span class="text-sm text-gray-600 font-medium">Total: ${data.total} users</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50"><tr>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">User</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Email</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">Role</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Stats</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">Actions</th>
+                    </tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        ${data.users.map(u => `
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-gray-800">${u.username}</div>
+                                    <div class="text-xs text-gray-400">${u.full_name || ''}</div>
+                                </td>
+                                <td class="px-4 py-3 text-gray-600 hidden md:table-cell">${u.email}</td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium ${u.role === 'admin' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}">${u.role}</span>
+                                </td>
+                                <td class="px-4 py-3 hidden sm:table-cell text-xs text-gray-500">
+                                    ${u.total_queries || 0} queries, ${u.total_documents || 0} docs
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="flex items-center gap-1 text-xs ${u.is_active ? 'text-green-600' : 'text-red-500'}">
+                                        <span class="w-2 h-2 rounded-full ${u.is_active ? 'bg-green-500' : 'bg-red-500'}"></span>
+                                        ${u.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex gap-2">
+                                        <button onclick="toggleUser(${u.id}, ${u.is_active})" 
+                                            class="text-xs px-2 py-1 rounded-lg ${u.is_active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'} transition">
+                                            ${u.is_active ? 'Disable' : 'Enable'}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+}
+
+async function toggleUser(userId, isActive) {
+    const result = await API.post(`/api/admin/users/${userId}`, {});
+    const r = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: API.headers(),
+        body: JSON.stringify({ is_active: !isActive })
+    });
+    if (r.ok) { showToast('User updated', 'success'); loadUsers(); }
+    else showToast('Update failed', 'error');
+}
+
+function searchUsers(val) {
+    clearTimeout(window._searchTimeout);
+    window._searchTimeout = setTimeout(() => loadUsers(val), 500);
+}
+
+async function loadChats() {
+    const data = await API.get('/api/admin/chats');
+    if (!data) return;
+    document.getElementById('chats-content').innerHTML = `
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50"><tr>
+                    <th class="text-left px-4 py-3 font-semibold text-gray-600">Session</th>
+                    <th class="text-left px-4 py-3 font-semibold text-gray-600">User ID</th>
+                    <th class="text-left px-4 py-3 font-semibold text-gray-600">Type</th>
+                    <th class="text-left px-4 py-3 font-semibold text-gray-600">Created</th>
+                </tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    ${data.sessions.map(s => `
+                        <tr class="hover:bg-gray-50"><td class="px-4 py-3 font-mono text-xs text-gray-500">${s.session_id.slice(0,16)}...</td>
+                        <td class="px-4 py-3">${s.user_id || 'Anonymous'}</td>
+                        <td class="px-4 py-3"><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs">${s.type}</span></td>
+                        <td class="px-4 py-3 text-gray-500 text-xs">${new Date(s.created_at).toLocaleString()}</td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>`;
+}
+
+async function loadAdminDocs() {
+    const data = await API.get('/api/admin/documents');
+    if (!data) return;
+    document.getElementById('documents-content').innerHTML = `
+        <div class="mb-3 text-sm text-gray-600 font-medium">Total: ${data.total} documents</div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50"><tr>
+                    <th class="text-left px-4 py-3 font-semibold text-gray-600">Title</th>
+                    <th class="text-left px-4 py-3 font-semibold text-gray-600">Type</th>
+                    <th class="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Words</th>
+                    <th class="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
+                    <th class="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Created</th>
+                </tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    ${data.documents.map(d => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 font-medium text-gray-800 max-w-xs truncate">${d.title}</td>
+                            <td class="px-4 py-3"><span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs">${d.type}</span></td>
+                            <td class="px-4 py-3 hidden sm:table-cell text-gray-500">${d.word_count || 0}</td>
+                            <td class="px-4 py-3"><span class="text-green-600 text-xs">✓ ${d.status}</span></td>
+                            <td class="px-4 py-3 text-gray-500 text-xs hidden md:table-cell">${new Date(d.created_at).toLocaleString()}</td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>`;
+}
+
+async function loadMonitoring() {
+    const data = await API.get('/api/admin/monitoring');
+    if (!data) return;
+    document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+    document.getElementById('monitoring-content').innerHTML = `
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            ${monitorCard('fas fa-microchip', 'CPU', data.cpu.percent + '%', data.cpu.percent > 80 ? 'text-red-500' : 'text-green-500', `${data.cpu.count} cores`)}
+            ${monitorCard('fas fa-memory', 'Memory', data.memory.percent + '%', data.memory.percent > 80 ? 'text-red-500' : 'text-blue-500', `${data.memory.used_mb} MB used`)}
+            ${monitorCard('fas fa-hdd', 'Disk', data.disk.percent + '%', data.disk.percent > 80 ? 'text-red-500' : 'text-orange-500', `${data.disk.free_gb} GB free`)}
+            ${monitorCard('fas fa-cogs', 'Process', data.process.memory_mb + ' MB', 'text-purple-500', `PID: ${data.process.pid}`)}
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            ${resourceCard('CPU Details', [['Usage', data.cpu.percent + '%'], ['Cores', data.cpu.count], ['User Time', Math.round(data.cpu.user_time) + 's'], ['Sys Time', Math.round(data.cpu.system_time) + 's']])}
+            ${resourceCard('Memory Details', [['Total', data.memory.total_mb + ' MB'], ['Used', data.memory.used_mb + ' MB'], ['Available', data.memory.available_mb + ' MB'], ['Usage', data.memory.percent + '%']])}
+            ${resourceCard('Disk Details', [['Total', data.disk.total_gb + ' GB'], ['Used', data.disk.used_gb + ' GB'], ['Free', data.disk.free_gb + ' GB'], ['Usage', data.disk.percent + '%']])}
+        </div>
+        <p class="text-xs text-gray-400 mt-4 text-center"><i class="fas fa-sync-alt mr-1"></i>Auto-refreshes every 5 seconds</p>`;
+}
+
+async function loadDatabase() {
+    const data = await API.get('/api/admin/database/stats');
+    const backups = await API.get('/api/admin/database/backups');
+    if (!data) return;
+    document.getElementById('database-content').innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-table text-primary"></i> Table Statistics</h3>
+                ${Object.entries(data.tables).map(([k,v]) => infoRow(k.replace(/_/g, ' '), '<span class="font-bold text-primary">' + v + '</span>')).join('')}
+                <div class="mt-4 pt-4 border-t">
+                    <p class="text-xs text-gray-500">DB Type: ${data.database.type} | Size: ${data.database.size_mb} MB</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-save text-green-600"></i> Database Backups</h3>
+                <button onclick="createBackup()" class="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-xl text-sm font-medium mb-4 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-download"></i> Create Backup Now
+                </button>
+                <div id="backups-list">
+                    ${backups && backups.backups ? backups.backups.map(b => `
+                        <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                            <div>
+                                <p class="text-sm font-medium text-gray-700">${b.filename}</p>
+                                <p class="text-xs text-gray-400">${b.size_mb} MB • ${new Date(b.created_at).toLocaleString()}</p>
+                            </div>
+                        </div>`).join('') || '<p class="text-gray-400 text-sm">No backups yet</p>' : '<p class="text-gray-400 text-sm">No backups yet</p>'}
+                </div>
+            </div>
+        </div>`;
+}
+
+async function createBackup() {
+    const r = await fetch('/api/admin/database/backup', { method: 'POST', headers: API.headers() });
+    const data = await r.json();
+    if (r.ok) { showToast(`Backup created: ${data.backup_file}`, 'success'); loadDatabase(); }
+    else showToast('Backup failed', 'error');
+}
+
+async function loadAnalytics() {
+    const data = await API.get('/api/admin/analytics?days=30');
+    if (!data) return;
+    document.getElementById('analytics-content').innerHTML = `
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            ${statCard('fas fa-user-plus', 'New Users (30d)', data.new_users, 'bg-blue-500', 'Last 30 days')}
+            ${statCard('fas fa-comment', 'Messages (30d)', data.new_messages, 'bg-green-500', 'Last 30 days')}
+            ${statCard('fas fa-file-plus', 'Documents (30d)', data.new_documents, 'bg-purple-500', 'Last 30 days')}
+            ${statCard('fas fa-calendar', 'Period', data.period_days + ' days', 'bg-gray-500', 'Analysis window')}
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <h3 class="font-bold text-gray-800 mb-4">Document Types Breakdown</h3>
+            ${Object.entries(data.document_types).map(([k,v]) => `
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="text-sm text-gray-600 w-28">${k}</span>
+                    <div class="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-primary rounded-full transition-all" style="width: ${Math.min(100, (v / Math.max(...Object.values(data.document_types))) * 100)}%"></div>
+                    </div>
+                    <span class="text-sm font-bold text-gray-700 w-8 text-right">${v}</span>
+                </div>`).join('') || '<p class="text-gray-400">No data yet</p>'}
+        </div>`;
+}
+
+// Helper functions
+function statCard(icon, label, value, color, sub) {
+    return `<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 ${color} rounded-xl flex items-center justify-center">
+                <i class="${icon} text-white text-sm"></i>
+            </div>
+            <span class="text-sm font-medium text-gray-600">${label}</span>
+        </div>
+        <p class="text-3xl font-bold text-gray-800">${value}</p>
+        <p class="text-xs text-gray-400 mt-1">${sub}</p>
+    </div>`;
+}
+
+function progressBar(label, value, color) {
+    return `<div class="mb-3">
+        <div class="flex justify-between text-xs text-gray-600 mb-1"><span>${label}</span><span>${value}%</span></div>
+        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full ${color} rounded-full transition-all" style="width:${value}%"></div>
+        </div>
+    </div>`;
+}
+
+function infoRow(label, value) {
+    return `<div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+        <span class="text-sm text-gray-600 capitalize">${label}</span>
+        <span class="text-sm text-gray-800">${value}</span>
+    </div>`;
+}
+
+function monitorCard(icon, label, value, colorClass, sub) {
+    return `<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 text-center">
+        <i class="${icon} ${colorClass} text-2xl mb-2"></i>
+        <p class="text-2xl font-bold text-gray-800">${value}</p>
+        <p class="text-xs text-gray-500">${label}</p>
+        <p class="text-xs text-gray-400 mt-1">${sub}</p>
+    </div>`;
+}
+
+function resourceCard(title, rows) {
+    return `<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <h4 class="font-bold text-gray-800 mb-3 text-sm">${title}</h4>
+        ${rows.map(([k,v]) => infoRow(k, v)).join('')}
+    </div>`;
+}
+
+// Initialize
+loadDashboard();
+</script>
+{% endblock %}

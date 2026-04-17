@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+{% block title %}Documents - LegalAI{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-40 border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <a href="/" class="flex items-center gap-2">
+                        <div class="w-9 h-9 gradient-legal rounded-xl flex items-center justify-center">
+                            <i class="fas fa-gavel text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold text-primary font-serif">LegalAI</span>
+                    </a>
+                    <span class="text-gray-300 hidden sm:block">|</span>
+                    <span class="text-gray-600 font-medium hidden sm:block">Document Generator</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="/chat" class="text-gray-600 hover:text-primary text-sm font-medium flex items-center gap-1">
+                        <i class="fas fa-comments"></i> <span class="hidden sm:inline">Chat</span>
+                    </a>
+                    <div class="nav-login flex items-center gap-2">
+                        <a href="/login" class="text-primary text-sm font-medium">Login</a>
+                        <a href="/register" class="btn-primary text-white px-4 py-2 rounded-xl font-medium text-sm">Register</a>
+                    </div>
+                    <div class="nav-user items-center gap-2" style="display:none">
+                        <span class="text-gray-700 text-sm font-medium">👋 <span class="nav-username"></span></span>
+                        <button onclick="AUTH.logout()" class="text-red-500 text-sm hover:text-red-600">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Tab Navigation -->
+        <div class="flex flex-wrap gap-2 mb-8 bg-white rounded-2xl p-2 shadow-sm">
+            <button onclick="showTab('legal-paper')" id="tab-legal-paper" class="tab-btn active flex-1 min-w-0 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium text-sm transition">
+                <i class="fas fa-scroll"></i> <span class="hidden sm:inline">Legal Paper</span>
+            </button>
+            <button onclick="showTab('assignment')" id="tab-assignment" class="tab-btn flex-1 min-w-0 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium text-sm transition">
+                <i class="fas fa-file-word"></i> <span class="hidden sm:inline">Assignment</span>
+            </button>
+            <button onclick="showTab('test-paper')" id="tab-test-paper" class="tab-btn flex-1 min-w-0 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium text-sm transition">
+                <i class="fas fa-clipboard-list"></i> <span class="hidden sm:inline">Test Paper</span>
+            </button>
+            <button onclick="showTab('ppt')" id="tab-ppt" class="tab-btn flex-1 min-w-0 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium text-sm transition">
+                <i class="fas fa-file-powerpoint"></i> <span class="hidden sm:inline">PPT</span>
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <!-- Form Panel -->
+            <div class="lg:col-span-2">
+                <!-- Legal Paper Tab -->
+                <div id="panel-legal-paper" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 tab-panel">
+                    <h2 class="font-bold text-gray-800 text-xl mb-1 flex items-center gap-2">
+                        <i class="fas fa-scroll text-primary"></i> Legal Paper
+                    </h2>
+                    <p class="text-gray-500 text-sm mb-5">Generate a professional legal paper from subject details</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Subject / Topic *</label>
+                            <input type="text" id="lp-subject" placeholder="e.g., Right to Privacy in India"
+                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Case Details / Context</label>
+                            <textarea id="lp-case" placeholder="Describe the case or provide context..."
+                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm resize-none" rows="4"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Paper Type</label>
+                            <select id="lp-type" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm bg-white">
+                                <option value="case_study">Case Study</option>
+                                <option value="research">Research Paper</option>
+                                <option value="brief">Legal Brief</option>
+                                <option value="memo">Legal Memorandum</option>
+                            </select>
+                        </div>
+                        <button onclick="generateLegalPaper()" class="w-full btn-primary text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2">
+                            <i class="fas fa-magic"></i> Generate Paper
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Assignment Tab -->
+                <div id="panel-assignment" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 tab-panel hidden">
+                    <h2 class="font-bold text-gray-800 text-xl mb-1 flex items-center gap-2">
+                        <i class="fas fa-file-word text-green-600"></i> Assignment Generator
+                    </h2>
+                    <p class="text-gray-500 text-sm mb-5">AI-free, humanized, plagiarism-free assignments</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Topic *</label>
+                            <input type="text" id="as-topic" placeholder="e.g., Constitutional Law - Separation of Powers"
+                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Your Sample Text (Writing Style Reference)</label>
+                            <textarea id="as-sample" placeholder="Paste your own writing sample here so AI matches your writing style..."
+                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm resize-none" rows="4"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Word Count</label>
+                                <input type="number" id="as-words" value="1000" min="500" max="5000" step="100"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                                <input type="text" id="as-subject" placeholder="Law / Subject"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                            <input type="text" id="as-author" placeholder="Student Name"
+                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                        </div>
+                        <div class="flex items-center gap-2 bg-green-50 rounded-xl p-3 border border-green-200">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <div class="text-xs text-green-700">
+                                <strong>AI-Free Guarantee:</strong> Output is humanized to bypass AI detectors. Plagiarism-free.
+                            </div>
+                        </div>
+                        <button onclick="generateAssignment()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition">
+                            <i class="fas fa-magic"></i> Generate Assignment (Login Required)
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Test Paper Tab -->
+                <div id="panel-test-paper" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 tab-panel hidden">
+                    <h2 class="font-bold text-gray-800 text-xl mb-1 flex items-center gap-2">
+                        <i class="fas fa-clipboard-list text-orange-600"></i> Test Paper Generator
+                    </h2>
+                    <p class="text-gray-500 text-sm mb-5">Generate unseen exam questions on any legal topic</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
+                            <input type="text" id="tp-subject" placeholder="e.g., Criminal Law, Contract Law"
+                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Questions</label>
+                                <input type="number" id="tp-questions" value="10" min="5" max="50"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                                <select id="tp-difficulty" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none bg-white text-sm">
+                                    <option value="easy">Easy</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="hard">Hard</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Question Type</label>
+                            <select id="tp-type" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none bg-white text-sm">
+                                <option value="mcq">Multiple Choice (MCQ)</option>
+                                <option value="subjective">Subjective / Essay</option>
+                                <option value="mixed">Mixed (MCQ + Subjective)</option>
+                            </select>
+                        </div>
+                        <button onclick="generateTestPaper()" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition">
+                            <i class="fas fa-magic"></i> Generate Test Paper
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- PPT Tab -->
+                <div id="panel-ppt" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 tab-panel hidden">
+                    <h2 class="font-bold text-gray-800 text-xl mb-1 flex items-center gap-2">
+                        <i class="fas fa-file-powerpoint text-purple-600"></i> PPT Generator
+                    </h2>
+                    <p class="text-gray-500 text-sm mb-5">Create presentations with full speech script (Login Required)</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Topic *</label>
+                            <input type="text" id="ppt-topic" placeholder="e.g., Human Rights Law in Pakistan"
+                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                                <input type="number" id="ppt-duration" value="15" min="5" max="60"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Slide Count (optional)</label>
+                                <input type="number" id="ppt-slides" placeholder="Auto" min="5" max="30"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Theme</label>
+                            <select id="ppt-theme" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none bg-white text-sm">
+                                <option value="legal_blue">Legal Blue (Professional)</option>
+                                <option value="professional">Dark Professional</option>
+                            </select>
+                        </div>
+                        <div class="bg-purple-50 rounded-xl p-3 border border-purple-200 text-xs text-purple-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Includes: Professional slides + complete speech script for each slide + presenter notes
+                        </div>
+                        <button onclick="generatePPT()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition">
+                            <i class="fas fa-magic"></i> Generate Presentation
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Output Panel -->
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 h-full flex flex-col">
+                    <div class="flex items-center justify-between p-5 border-b">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <i class="fas fa-eye text-primary"></i> Output Preview
+                        </h3>
+                        <div id="output-actions" class="hidden flex items-center gap-2">
+                            <button onclick="copyOutput()" class="flex items-center gap-1 text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg text-gray-600 transition">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                            <a id="download-btn" href="#" class="flex items-center gap-1 text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-light transition">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Loading state -->
+                    <div id="output-loading" class="hidden flex-1 flex flex-col items-center justify-center p-12">
+                        <div class="spinner mb-4" style="width:50px;height:50px;border-width:4px"></div>
+                        <p class="text-gray-600 font-medium text-lg mb-2">Generating with AI...</p>
+                        <p class="text-gray-400 text-sm text-center" id="loading-msg">Connecting to HuggingFace models. This may take 20-60 seconds...</p>
+                    </div>
+                    
+                    <!-- Empty state -->
+                    <div id="output-empty" class="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                        <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+                            <i class="fas fa-file-alt text-gray-300 text-2xl"></i>
+                        </div>
+                        <p class="text-gray-400 font-medium">Fill the form and click Generate</p>
+                        <p class="text-gray-300 text-sm mt-1">Your generated content will appear here</p>
+                    </div>
+                    
+                    <!-- Content state -->
+                    <div id="output-content" class="hidden flex-1 overflow-auto p-6">
+                        <div id="content-preview" class="prose text-sm text-gray-700 leading-relaxed"></div>
+                        
+                        <!-- PPT Script section -->
+                        <div id="ppt-script-section" class="hidden mt-6 border-t pt-6">
+                            <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <i class="fas fa-microphone text-purple-600"></i> Full Speech Script
+                            </h4>
+                            <div id="ppt-script" class="bg-purple-50 rounded-xl p-5 text-sm text-gray-700 whitespace-pre-wrap font-mono leading-relaxed border border-purple-200"></div>
+                        </div>
+                        
+                        <!-- PPT Slides preview -->
+                        <div id="ppt-slides-section" class="hidden mt-6 border-t pt-6">
+                            <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <i class="fas fa-th-large text-purple-600"></i> Slide Outline
+                            </h4>
+                            <div id="ppt-slides-list" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- My Documents section -->
+        <div id="my-docs-section" class="mt-8 hidden">
+            <h3 class="font-bold text-gray-800 text-xl mb-4 flex items-center gap-2">
+                <i class="fas fa-history text-primary"></i> My Generated Documents
+            </h3>
+            <div id="docs-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tab management
+function showTab(tab) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active', 'bg-primary', 'text-white');
+        b.classList.add('text-gray-600', 'hover:bg-gray-100');
+    });
+    document.getElementById(`panel-${tab}`).classList.remove('hidden');
+    const activeBtn = document.getElementById(`tab-${tab}`);
+    activeBtn.classList.add('bg-primary', 'text-white');
+    activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-100');
+}
+
+// Initialize tabs
+document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('text-gray-600', 'hover:bg-gray-100'));
+const urlParams = new URLSearchParams(window.location.search);
+showTab(urlParams.get('type') || 'legal-paper');
+
+function setLoading(msg = 'Generating with AI...') {
+    document.getElementById('output-empty').classList.add('hidden');
+    document.getElementById('output-content').classList.add('hidden');
+    document.getElementById('output-loading').classList.remove('hidden');
+    document.getElementById('output-loading').classList.add('flex');
+    if (msg) document.getElementById('loading-msg').textContent = msg;
+}
+
+function showContent(content, downloadUrl = null) {
+    document.getElementById('output-loading').classList.add('hidden');
+    document.getElementById('output-loading').classList.remove('flex');
+    document.getElementById('output-empty').classList.add('hidden');
+    document.getElementById('output-content').classList.remove('hidden');
+    document.getElementById('content-preview').innerHTML = renderMarkdown(content);
+    
+    if (downloadUrl) {
+        document.getElementById('output-actions').classList.remove('hidden');
+        document.getElementById('download-btn').href = downloadUrl;
+    }
+    
+    if (AUTH.isLoggedIn()) loadMyDocs();
+}
+
+function showError(msg) {
+    document.getElementById('output-loading').classList.add('hidden');
+    document.getElementById('output-loading').classList.remove('flex');
+    document.getElementById('output-empty').classList.remove('hidden');
+    document.getElementById('output-empty').innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-exclamation-triangle text-red-400 text-3xl mb-3"></i>
+            <p class="text-red-600 font-medium">${msg}</p>
+            <p class="text-gray-400 text-sm mt-2">Please try again</p>
+        </div>`;
+}
+
+async function generateLegalPaper() {
+    const subject = document.getElementById('lp-subject').value.trim();
+    if (!subject) { showToast('Please enter a subject', 'warning'); return; }
+    setLoading('Generating legal paper with Mistral AI...');
+    
+    try {
+        const result = await API.post('/api/documents/legal-paper', {
+            subject,
+            case_details: document.getElementById('lp-case').value,
+            paper_type: document.getElementById('lp-type').value,
+        });
+        if (result.ok) {
+            showContent(result.data.content, result.data.download_url);
+            showToast(`Legal paper generated! (${result.data.word_count} words)`, 'success');
+        } else {
+            showError(result.data.detail || 'Generation failed');
+        }
+    } catch(e) { showError('Connection error. Please try again.'); }
+}
+
+async function generateAssignment() {
+    if (!AUTH.isLoggedIn()) {
+        showToast('Please login to generate assignments', 'warning');
+        setTimeout(() => window.location.href = '/login?next=/documents?type=assignment', 1500);
+        return;
+    }
+    const topic = document.getElementById('as-topic').value.trim();
+    if (!topic) { showToast('Please enter a topic', 'warning'); return; }
+    setLoading('Generating assignment and humanizing for AI detection bypass...');
+    
+    try {
+        const result = await API.post('/api/documents/assignment', {
+            topic,
+            sample_text: document.getElementById('as-sample').value,
+            word_count: parseInt(document.getElementById('as-words').value) || 1000,
+            subject: document.getElementById('as-subject').value,
+            author_name: document.getElementById('as-author').value,
+        });
+        if (result.ok) {
+            showContent(result.data.content, result.data.download_url);
+            showToast(`Assignment ready! ${result.data.word_count} words. AI-Free ✓`, 'success');
+        } else {
+            if (result.status === 401) { showToast('Please login first', 'warning'); window.location.href='/login'; }
+            else showError(result.data.detail || 'Generation failed');
+        }
+    } catch(e) { showError('Connection error. Please try again.'); }
+}
+
+async function generateTestPaper() {
+    const subject = document.getElementById('tp-subject').value.trim();
+    if (!subject) { showToast('Please enter a subject', 'warning'); return; }
+    setLoading('Generating unseen test paper...');
+    
+    try {
+        const result = await API.post('/api/documents/test-paper', {
+            subject,
+            num_questions: parseInt(document.getElementById('tp-questions').value) || 10,
+            difficulty: document.getElementById('tp-difficulty').value,
+            test_type: document.getElementById('tp-type').value,
+        });
+        if (result.ok) {
+            showContent(result.data.content, result.data.download_url);
+            showToast('Test paper generated!', 'success');
+        } else showError(result.data.detail || 'Generation failed');
+    } catch(e) { showError('Connection error.'); }
+}
+
+async function generatePPT() {
+    if (!AUTH.isLoggedIn()) {
+        showToast('Please login to generate presentations', 'warning');
+        setTimeout(() => window.location.href = '/login?next=/documents?type=ppt', 1500);
+        return;
+    }
+    const topic = document.getElementById('ppt-topic').value.trim();
+    if (!topic) { showToast('Please enter a topic', 'warning'); return; }
+    
+    const duration = parseInt(document.getElementById('ppt-duration').value) || 15;
+    const slides = document.getElementById('ppt-slides').value;
+    setLoading(`Creating ${duration}-minute presentation with speech script...`);
+    
+    try {
+        const result = await API.post('/api/documents/presentation', {
+            topic,
+            duration_minutes: duration,
+            slide_count: slides ? parseInt(slides) : null,
+            theme: document.getElementById('ppt-theme').value,
+        });
+        if (result.ok) {
+            const data = result.data;
+            // Show summary
+            const summary = `# Presentation: ${topic}\n\n**Duration:** ${duration} minutes | **Slides:** ${data.slide_count}\n\n## Slide Titles:\n` + 
+                data.ppt_data.slides.map((s, i) => `${i+1}. ${s.title}`).join('\n');
+            showContent(summary, data.download_url);
+            
+            // Show script
+            document.getElementById('ppt-script-section').classList.remove('hidden');
+            document.getElementById('ppt-script').textContent = data.script;
+            
+            // Show slide cards
+            document.getElementById('ppt-slides-section').classList.remove('hidden');
+            document.getElementById('ppt-slides-list').innerHTML = data.ppt_data.slides.map(s => `
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-7 h-7 bg-primary text-white rounded-lg flex items-center justify-center text-xs font-bold">${s.slide_number}</span>
+                        <h5 class="font-semibold text-gray-800 text-sm">${s.title}</h5>
+                    </div>
+                    <ul class="text-xs text-gray-600 space-y-1">
+                        ${s.bullets.map(b => `<li class="flex items-start gap-1"><span class="text-primary mt-0.5">▸</span>${b}</li>`).join('')}
+                    </ul>
+                    <p class="text-xs text-gray-400 mt-2 italic">${s.notes || ''}</p>
+                </div>
+            `).join('');
+            
+            showToast(`Presentation ready! ${data.slide_count} slides with script ✓`, 'success');
+        } else {
+            if (result.status === 401) { showToast('Please login first', 'warning'); window.location.href='/login'; }
+            else showError(result.data.detail || 'Generation failed');
+        }
+    } catch(e) { showError('Connection error.'); }
+}
+
+function copyOutput() {
+    const text = document.getElementById('content-preview').innerText;
+    navigator.clipboard.writeText(text);
+    showToast('Copied to clipboard!', 'success');
+}
+
+async function loadMyDocs() {
+    try {
+        const data = await API.get('/api/documents/my-documents');
+        if (data && data.documents && data.documents.length > 0) {
+            document.getElementById('my-docs-section').classList.remove('hidden');
+            document.getElementById('docs-list').innerHTML = data.documents.slice(0, 6).map(doc => `
+                <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                    <div class="flex items-start justify-between mb-2">
+                        <h4 class="font-semibold text-gray-800 text-sm truncate flex-1">${doc.title}</h4>
+                        <span class="ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            doc.type === 'assignment' ? 'bg-green-100 text-green-700' :
+                            doc.type === 'ppt' ? 'bg-purple-100 text-purple-700' :
+                            doc.type === 'test' ? 'bg-orange-100 text-orange-700' :
+                            'bg-blue-100 text-blue-700'
+                        }">${doc.type}</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-3">${doc.word_count || 0} words • ${new Date(doc.created_at).toLocaleDateString()}</p>
+                    ${doc.download_url ? `<a href="${doc.download_url}" class="text-xs text-primary hover:underline flex items-center gap-1"><i class="fas fa-download"></i> Download</a>` : ''}
+                </div>
+            `).join('');
+        }
+    } catch(e) {}
+}
+
+// Load docs on page load if logged in
+if (AUTH.isLoggedIn()) loadMyDocs();
+</script>
+{% endblock %}
